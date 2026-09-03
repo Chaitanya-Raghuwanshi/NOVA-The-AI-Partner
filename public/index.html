@@ -1,0 +1,1951 @@
+```html
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Nova Robot Companion</title>
+
+  <!-- FACE DETECTION -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+
+      display: grid;
+      place-items: center;
+
+      background:
+        radial-gradient(circle, #26363b, #050708 60%, #000);
+
+      color: #dfffff;
+      font-family: Arial, sans-serif;
+    }
+
+
+    /* =========================
+       MAIN CARD
+       ========================= */
+
+    .card {
+      width: min(90vw, 480px);
+
+      padding: 42px;
+
+      text-align: center;
+
+      border: 1px solid #66eaff66;
+      border-radius: 28px;
+
+      background: #091416;
+
+      box-shadow:
+        0 0 55px #40dff522;
+    }
+
+
+    /* =========================
+       ROBOT FACE
+       ========================= */
+
+    .face {
+      height: 150px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      gap: 28px;
+
+      position: relative;
+
+      overflow: hidden;
+
+      border-radius: 48px;
+
+      background: #000;
+
+      box-shadow:
+        inset 0 0 22px #000,
+        0 0 20px #000;
+
+      transition:
+        transform 0.3s ease;
+    }
+
+
+    /* =========================
+       EYES
+       ========================= */
+
+    .eye {
+      width: 54px;
+      height: 38px;
+
+      border-radius:
+        60% 60% 42% 42%;
+
+      background:
+        linear-gradient(
+          145deg,
+          #d5ffff,
+          #55d4ef
+        );
+
+      box-shadow:
+        0 0 22px #75eaff;
+
+      transition:
+        transform 0.25s ease;
+    }
+
+
+    /* =========================
+       VOICE SIGNAL
+       ========================= */
+
+    .signal {
+      position: absolute;
+
+      bottom: 18px;
+
+      display: flex;
+      align-items: center;
+
+      gap: 5px;
+    }
+
+    .signal i {
+      width: 6px;
+      height: 9px;
+
+      border-radius: 8px;
+
+      background: #75eaff;
+
+      box-shadow:
+        0 0 8px #75eaff;
+    }
+
+    .signal i:nth-child(2),
+    .signal i:nth-child(4) {
+      height: 18px;
+    }
+
+    .signal i:nth-child(3) {
+      height: 28px;
+    }
+
+
+    /* =========================
+       LISTENING / TALKING
+       ========================= */
+
+    .listening .signal i,
+    .talking .signal i {
+
+      animation:
+        wave 0.35s infinite alternate;
+    }
+
+    .listening .signal i:nth-child(2),
+    .talking .signal i:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    .listening .signal i:nth-child(3),
+    .talking .signal i:nth-child(3) {
+      animation-delay: 0.18s;
+    }
+
+
+    @keyframes wave {
+
+      to {
+        height: 36px;
+
+        box-shadow:
+          0 0 17px #75eaff;
+      }
+
+    }
+
+
+    /* =========================
+       EMOTIONS
+       ========================= */
+
+    .face.happy .eye {
+      transform:
+        scaleY(0.75)
+        translateY(4px);
+    }
+
+
+    .face.curious .eye:first-child {
+      transform:
+        translateY(-5px)
+        rotate(-5deg);
+    }
+
+    .face.curious .eye:last-child {
+      transform:
+        translateY(5px)
+        rotate(5deg);
+    }
+
+
+    .face.thinking .eye {
+
+      animation:
+        think 1.2s infinite alternate;
+    }
+
+
+    .face.excited .eye {
+      transform:
+        scale(1.12);
+    }
+
+
+    .face.sad .eye {
+
+      transform:
+        scaleY(1.2)
+        translateY(4px);
+    }
+
+
+    @keyframes think {
+
+      from {
+        transform:
+          translateX(-5px);
+      }
+
+      to {
+        transform:
+          translateX(5px);
+      }
+
+    }
+
+
+    /* =========================
+       BUTTONS
+       ========================= */
+
+    button {
+
+      margin-top: 18px;
+
+      padding:
+        14px 24px;
+
+      border: 0;
+
+      border-radius: 99px;
+
+      background: #75eaff;
+
+      color: #041114;
+
+      font-weight: bold;
+
+      cursor: pointer;
+
+      transition:
+        transform 0.15s ease,
+        filter 0.15s ease;
+    }
+
+
+    button:hover {
+      filter: brightness(1.12);
+    }
+
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+
+    /* =========================
+       TALK BUTTON
+       ========================= */
+
+    #talk {
+      background: #75eaff;
+    }
+
+
+    #talk.active {
+
+      background: #ff7676;
+
+      color: white;
+    }
+
+
+    /* =========================
+       CAMERA
+       ========================= */
+
+    .camera-area {
+
+      margin-top: 25px;
+
+      display: flex;
+      flex-direction: column;
+
+      align-items: center;
+
+      gap: 8px;
+    }
+
+
+    #cameraContainer {
+
+      width: 220px;
+      height: 165px;
+
+      position: relative;
+
+      display: none;
+
+      overflow: hidden;
+
+      border-radius: 18px;
+
+      background: #000;
+
+      border:
+        1px solid #66eaff66;
+
+      box-shadow:
+        0 0 25px #40dff522;
+    }
+
+
+    #cameraContainer.active {
+      display: block;
+    }
+
+
+    #camera {
+
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+
+      transform:
+        scaleX(-1);
+    }
+
+
+    #cameraStatus {
+
+      font:
+        11px monospace;
+
+      color:
+        #8bbdc4;
+    }
+
+
+    /* =========================
+       STATUS
+       ========================= */
+
+    #status {
+
+      min-height: 42px;
+
+      margin:
+        15px 0 0;
+
+      color:
+        #c1e5ea;
+
+      font:
+        12px monospace;
+
+      line-height:
+        1.6;
+    }
+
+
+    /* =========================
+       SMALL INDICATOR
+       ========================= */
+
+    .indicator {
+
+      margin-top: 10px;
+
+      font:
+        11px monospace;
+
+      color:
+        #628c92;
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+  <main class="card">
+
+
+    <!-- =====================
+         ROBOT FACE
+         ===================== -->
+
+    <div id="face" class="face">
+
+      <i class="eye"></i>
+      <i class="eye"></i>
+
+
+      <div class="signal">
+
+        <i></i>
+        <i></i>
+        <i></i>
+        <i></i>
+        <i></i>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================
+         TALK BUTTON
+         ===================== -->
+
+    <button id="talk">
+
+      🎤 Hold to Talk
+
+    </button>
+
+
+    <!-- =====================
+         CAMERA BUTTON
+         ===================== -->
+
+    <button id="cameraButton">
+
+      📷 Turn Camera On
+
+    </button>
+
+
+    <!-- =====================
+         CAMERA
+         ===================== -->
+
+    <div class="camera-area">
+
+      <div id="cameraContainer">
+
+        <video
+          id="camera"
+          autoplay
+          muted
+          playsinline>
+        </video>
+
+      </div>
+
+
+      <div id="cameraStatus">
+
+        Camera OFF
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================
+         STATUS
+         ===================== -->
+
+    <p id="status">
+
+      Hold the microphone button
+      and talk to Nova.
+
+    </p>
+
+
+    <div class="indicator">
+
+      NOVA • ONLINE
+
+    </div>
+
+
+  </main>
+
+
+  <script>
+
+
+    /* =================================================
+       ELEMENTS
+       ================================================= */
+
+    const face =
+      document.querySelector("#face");
+
+    const talkButton =
+      document.querySelector("#talk");
+
+    const cameraButton =
+      document.querySelector("#cameraButton");
+
+    const status =
+      document.querySelector("#status");
+
+    const camera =
+      document.querySelector("#camera");
+
+    const cameraContainer =
+      document.querySelector("#cameraContainer");
+
+    const cameraStatus =
+      document.querySelector("#cameraStatus");
+
+
+    /* =================================================
+       SPEECH RECOGNITION
+       ================================================= */
+
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+
+    let recognition = null;
+
+    let recognitionRunning =
+      false;
+
+    let microphoneEnabled =
+      false;
+
+
+    /* =================================================
+       NOVA STATE
+       ================================================= */
+
+    let novaState =
+      "idle";
+
+
+    function setNovaState(state) {
+
+      novaState =
+        state;
+
+      face.className =
+        `face ${state}`;
+
+    }
+
+
+    /* =================================================
+       VOICE SELECTION
+       ================================================= */
+
+    let availableVoices = [];
+
+
+    function loadVoices() {
+
+      availableVoices =
+        speechSynthesis.getVoices();
+
+      console.log(
+        "Nova voices loaded:",
+        availableVoices.length
+      );
+
+    }
+
+
+    loadVoices();
+
+
+    speechSynthesis.onvoiceschanged =
+      loadVoices;
+
+
+    /* =================================================
+       SPEAK
+       ================================================= */
+
+    function speak(text) {
+
+      if (!text) {
+        return;
+      }
+
+
+      /*
+         Stop anything currently speaking.
+      */
+
+      speechSynthesis.cancel();
+
+
+      /*
+         IMPORTANT:
+
+         Disable microphone while Nova talks.
+
+         This prevents Nova hearing her
+         own voice and replying to herself.
+      */
+
+      recognitionRunning =
+        false;
+
+
+      if (recognition) {
+
+        try {
+          recognition.abort();
+        } catch {}
+
+      }
+
+
+      setNovaState(
+        "talking"
+      );
+
+
+      status.textContent =
+        `NOVA: ${text}`;
+
+
+      const utterance =
+        new SpeechSynthesisUtterance(
+          text
+        );
+
+
+      utterance.rate =
+        1.03;
+
+      utterance.pitch =
+        1.15;
+
+
+      /*
+         Detect Hindi.
+      */
+
+      const isHindi =
+        /[\u0900-\u097F]/.test(
+          text
+        );
+
+
+      let selectedVoice =
+        null;
+
+
+      /* =========================
+         HINDI
+         ========================= */
+
+      if (isHindi) {
+
+        utterance.lang =
+          "hi-IN";
+
+
+        selectedVoice =
+          availableVoices.find(
+            voice =>
+              voice.name ===
+              "Google हिन्दी"
+          );
+
+
+        if (!selectedVoice) {
+
+          selectedVoice =
+            availableVoices.find(
+              voice =>
+                voice.lang
+                  .toLowerCase()
+                  .startsWith("hi")
+            );
+
+        }
+
+      }
+
+
+      /* =========================
+         ENGLISH
+         ========================= */
+
+      else {
+
+        utterance.lang =
+          "en-IN";
+
+
+        selectedVoice =
+          availableVoices.find(
+            voice =>
+              voice.name ===
+              "Google UK English Female"
+          );
+
+
+        if (!selectedVoice) {
+
+          selectedVoice =
+            availableVoices.find(
+              voice =>
+                voice.lang
+                  .toLowerCase()
+                  .startsWith("en")
+            );
+
+        }
+
+      }
+
+
+      /*
+         Use selected voice.
+      */
+
+      if (selectedVoice) {
+
+        utterance.voice =
+          selectedVoice;
+
+
+        console.log(
+          "Nova voice:",
+          selectedVoice.name,
+          selectedVoice.lang
+        );
+
+      }
+
+
+      utterance.onstart =
+        () => {
+
+          setNovaState(
+            "talking"
+          );
+
+        };
+
+
+      utterance.onend =
+        () => {
+
+          setNovaState(
+            "idle"
+          );
+
+
+          /*
+             IMPORTANT:
+
+             DO NOT automatically start
+             microphone after Nova speaks.
+
+             User must press/hold Talk.
+
+             This prevents self-conversation.
+          */
+
+          if (
+            microphoneEnabled
+          ) {
+
+            status.textContent =
+              "Hold 🎤 to talk to Nova.";
+
+          }
+
+        };
+
+
+      utterance.onerror =
+        error => {
+
+          console.error(
+            "Speech synthesis error:",
+            error
+          );
+
+
+          setNovaState(
+            "idle"
+          );
+
+        };
+
+
+      speechSynthesis.speak(
+        utterance
+      );
+
+    }
+
+
+    /* =================================================
+       SHOW EMOTION
+       ================================================= */
+
+    function showEmotion(
+      emotion
+    ) {
+
+      if (!emotion) {
+
+        emotion =
+          "neutral";
+
+      }
+
+
+      setNovaState(
+        emotion
+      );
+
+
+      console.log(
+        "Nova emotion:",
+        emotion
+      );
+
+    }
+
+
+    /* =================================================
+       SEND MESSAGE TO SERVER
+       ================================================= */
+
+    async function replyTo(
+      message
+    ) {
+
+      if (!message) {
+        return;
+      }
+
+
+      setNovaState(
+        "thinking"
+      );
+
+
+      status.textContent =
+        "NOVA IS THINKING…";
+
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/chat",
+            {
+
+              method:
+                "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  message:
+                    message
+                })
+
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            `Server error: ${response.status}`
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        console.log(
+          "Nova response:",
+          data
+        );
+
+
+        showEmotion(
+          data.emotion
+        );
+
+
+        speak(
+          data.reply
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Connection error:",
+          error
+        );
+
+
+        /*
+           This should now be rare because
+           server.js has its own local fallback.
+        */
+
+        setNovaState(
+          "sad"
+        );
+
+
+        speak(
+          "I'm having a little trouble right now, but I'm still here."
+        );
+
+      }
+
+    }
+
+
+    /* =================================================
+       START RECOGNITION
+       ================================================= */
+
+    function startRecognition() {
+
+      if (
+        !recognition ||
+        recognitionRunning
+      ) {
+        return;
+      }
+
+
+      /*
+         NEVER listen while Nova is talking.
+      */
+
+      if (
+        speechSynthesis.speaking
+      ) {
+
+        return;
+
+      }
+
+
+      try {
+
+        recognitionRunning =
+          true;
+
+
+        setNovaState(
+          "listening"
+        );
+
+
+        status.textContent =
+          "LISTENING…";
+
+
+        recognition.start();
+
+
+      } catch (error) {
+
+        recognitionRunning =
+          false;
+
+        console.log(
+          "Recognition start:",
+          error
+        );
+
+      }
+
+    }
+
+
+    /* =================================================
+       STOP RECOGNITION
+       ================================================= */
+
+    function stopRecognition() {
+
+      if (!recognition) {
+        return;
+      }
+
+
+      try {
+
+        recognition.stop();
+
+      } catch {}
+
+
+      recognitionRunning =
+        false;
+
+
+      setNovaState(
+        "idle"
+      );
+
+    }
+
+
+    /* =================================================
+       CREATE RECOGNITION
+       ================================================= */
+
+    function createRecognition() {
+
+      if (!SpeechRecognition) {
+
+        status.textContent =
+          "Voice recognition is not supported. Please use Google Chrome.";
+
+        return false;
+
+      }
+
+
+      recognition =
+        new SpeechRecognition();
+
+
+      /*
+         en-IN works well for Indian English
+         and can understand many accents.
+      */
+
+      recognition.lang =
+        "en-IN";
+
+
+      recognition.continuous =
+        false;
+
+
+      recognition.interimResults =
+        false;
+
+
+      recognition.maxAlternatives =
+        1;
+
+
+      /* =================================================
+         RESULT
+         ================================================= */
+
+      recognition.onresult =
+        event => {
+
+          recognitionRunning =
+            false;
+
+
+          const message =
+            event
+              .results[0][0]
+              .transcript
+              .trim();
+
+
+          console.log(
+            "You said:",
+            message
+          );
+
+
+          if (!message) {
+
+            setNovaState(
+              "idle"
+            );
+
+            return;
+
+          }
+
+
+          status.textContent =
+            `YOU: ${message}`;
+
+
+          /*
+             Stop listening BEFORE
+             asking Nova to answer.
+          */
+
+          try {
+
+            recognition.stop();
+
+          } catch {}
+
+
+          recognitionRunning =
+            false;
+
+
+          replyTo(
+            message
+          );
+
+        };
+
+
+      /* =================================================
+         ERROR
+         ================================================= */
+
+      recognition.onerror =
+        event => {
+
+          recognitionRunning =
+            false;
+
+
+          console.error(
+            "Speech recognition error:",
+            event.error
+          );
+
+
+          /*
+             Ignore normal "no speech"
+             errors silently.
+          */
+
+          if (
+            event.error ===
+            "no-speech"
+          ) {
+
+            setNovaState(
+              "idle"
+            );
+
+
+            status.textContent =
+              "Hold 🎤 and speak to Nova.";
+
+            return;
+
+          }
+
+
+          if (
+            event.error ===
+            "aborted"
+          ) {
+
+            return;
+
+          }
+
+
+          if (
+            event.error ===
+            "not-allowed"
+          ) {
+
+            status.textContent =
+              "Microphone permission blocked. Allow microphone access in Chrome.";
+
+            return;
+
+          }
+
+
+          if (
+            event.error ===
+            "audio-capture"
+          ) {
+
+            status.textContent =
+              "No microphone found. Check your microphone.";
+
+            return;
+
+          }
+
+
+          status.textContent =
+            `Voice error: ${event.error}`;
+
+        };
+
+
+      /* =================================================
+         END
+         ================================================= */
+
+      recognition.onend =
+        () => {
+
+          recognitionRunning =
+            false;
+
+
+          /*
+             DO NOT automatically restart.
+
+             The user must press/hold
+             the Talk button.
+          */
+
+          if (
+            novaState ===
+            "listening"
+          ) {
+
+            setNovaState(
+              "idle"
+            );
+
+          }
+
+        };
+
+
+      return true;
+
+    }
+
+
+    /* =================================================
+       TALK BUTTON — MOUSE
+       ================================================= */
+
+    async function beginTalking() {
+
+      /*
+         Don't allow microphone while
+         Nova is speaking.
+      */
+
+      if (
+        speechSynthesis.speaking
+      ) {
+
+        speechSynthesis.cancel();
+
+      }
+
+
+      if (!microphoneEnabled) {
+
+        try {
+
+          await navigator
+            .mediaDevices
+            .getUserMedia({
+              audio: true
+            });
+
+
+          microphoneEnabled =
+            true;
+
+
+          talkButton.textContent =
+            "🎤 Hold to Talk";
+
+
+          status.textContent =
+            "Microphone ready.";
+
+        } catch {
+
+          status.textContent =
+            "Please allow microphone access.";
+
+          return;
+
+        }
+
+      }
+
+
+      if (!recognition) {
+
+        const created =
+          createRecognition();
+
+
+        if (!created) {
+          return;
+        }
+
+      }
+
+
+      talkButton.classList.add(
+        "active"
+      );
+
+
+      talkButton.textContent =
+        "🔴 Listening... Release to send";
+
+
+      startRecognition();
+
+    }
+
+
+    function endTalking() {
+
+      talkButton.classList.remove(
+        "active"
+      );
+
+
+      talkButton.textContent =
+        "🎤 Hold to Talk";
+
+
+      if (
+        recognitionRunning
+      ) {
+
+        stopRecognition();
+
+      }
+
+    }
+
+
+    /* =================================================
+       MOUSE EVENTS
+       ================================================= */
+
+    talkButton.addEventListener(
+      "mousedown",
+      beginTalking
+    );
+
+
+    talkButton.addEventListener(
+      "mouseup",
+      endTalking
+    );
+
+
+    talkButton.addEventListener(
+      "mouseleave",
+      endTalking
+    );
+
+
+    /* =================================================
+       TOUCH EVENTS
+       ================================================= */
+
+    talkButton.addEventListener(
+      "touchstart",
+      event => {
+
+        event.preventDefault();
+
+        beginTalking();
+
+      }
+    );
+
+
+    talkButton.addEventListener(
+      "touchend",
+      event => {
+
+        event.preventDefault();
+
+        endTalking();
+
+      }
+    );
+
+
+    /* =================================================
+       CAMERA VARIABLES
+       ================================================= */
+
+    let cameraStream =
+      null;
+
+    let cameraEnabled =
+      false;
+
+    let userVisible =
+      false;
+
+    let previousUserVisible =
+      false;
+
+    let faceDetectionRunning =
+      false;
+
+    let visionTimer =
+      null;
+
+    let absenceTimer =
+      null;
+
+    let goodbyeReactionDone =
+      false;
+
+
+    /* =================================================
+       LOAD FACE DETECTION
+       ================================================= */
+
+    async function loadFaceDetection() {
+
+      cameraStatus.textContent =
+        "Loading Nova Vision…";
+
+
+      try {
+
+        await faceapi
+          .nets
+          .tinyFaceDetector
+          .loadFromUri(
+            "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model"
+          );
+
+
+        console.log(
+          "Nova Vision loaded."
+        );
+
+
+        return true;
+
+      } catch (error) {
+
+        console.error(
+          "Face detection model error:",
+          error
+        );
+
+
+        cameraStatus.textContent =
+          "Nova Vision could not load.";
+
+        return false;
+
+      }
+
+    }
+
+
+    /* =================================================
+       START CAMERA
+       ================================================= */
+
+    async function startCamera() {
+
+      try {
+
+        cameraStream =
+          await navigator
+            .mediaDevices
+            .getUserMedia({
+
+              video: {
+                facingMode:
+                  "user"
+              },
+
+              audio: false
+
+            });
+
+
+        camera.srcObject =
+          cameraStream;
+
+
+        cameraEnabled =
+          true;
+
+
+        cameraContainer
+          .classList
+          .add("active");
+
+
+        cameraButton.textContent =
+          "📷 Turn Camera Off";
+
+
+        cameraStatus.textContent =
+          "Camera ON • Looking for you…";
+
+
+        /*
+           Load detector.
+        */
+
+        const loaded =
+          await loadFaceDetection();
+
+
+        if (!loaded) {
+
+          stopCamera();
+
+          return;
+
+        }
+
+
+        startVision();
+
+
+      } catch (error) {
+
+        console.error(
+          "Camera error:",
+          error
+        );
+
+
+        cameraStatus.textContent =
+          "Camera permission blocked.";
+
+
+        status.textContent =
+          "Please allow camera access in Chrome.";
+
+      }
+
+    }
+
+
+    /* =================================================
+       STOP CAMERA
+       ================================================= */
+
+    function stopCamera() {
+
+      if (cameraStream) {
+
+        cameraStream
+          .getTracks()
+          .forEach(
+            track =>
+              track.stop()
+          );
+
+      }
+
+
+      camera.srcObject =
+        null;
+
+
+      cameraStream =
+        null;
+
+
+      cameraEnabled =
+        false;
+
+
+      userVisible =
+        false;
+
+
+      previousUserVisible =
+        false;
+
+
+      goodbyeReactionDone =
+        false;
+
+
+      clearTimeout(
+        absenceTimer
+      );
+
+
+      clearInterval(
+        visionTimer
+      );
+
+
+      cameraContainer
+        .classList
+        .remove("active");
+
+
+      cameraButton.textContent =
+        "📷 Turn Camera On";
+
+
+      cameraStatus.textContent =
+        "Camera OFF";
+
+
+      setNovaState(
+        "idle"
+      );
+
+    }
+
+
+    /* =================================================
+       CAMERA BUTTON
+       ================================================= */
+
+    cameraButton.addEventListener(
+      "click",
+      () => {
+
+        if (
+          cameraEnabled
+        ) {
+
+          stopCamera();
+
+        } else {
+
+          startCamera();
+
+        }
+
+      }
+    );
+
+
+    /* =================================================
+       DETECT FACE
+       ================================================= */
+
+    async function detectUser() {
+
+      if (
+        !cameraEnabled ||
+        !camera.videoWidth ||
+        faceDetectionRunning
+      ) {
+
+        return;
+
+      }
+
+
+      faceDetectionRunning =
+        true;
+
+
+      try {
+
+        const detection =
+          await faceapi
+            .detectSingleFace(
+
+              camera,
+
+              new faceapi
+                .TinyFaceDetectorOptions({
+
+                  inputSize:
+                    224,
+
+                  scoreThreshold:
+                    0.45
+
+                })
+
+            );
+
+
+        userVisible =
+          !!detection;
+
+
+        handlePresence();
+
+
+      } catch (error) {
+
+        console.error(
+          "Face detection error:",
+          error
+        );
+
+      } finally {
+
+        faceDetectionRunning =
+          false;
+
+      }
+
+    }
+
+
+    /* =================================================
+       PRESENCE HANDLER
+       ================================================= */
+
+    function handlePresence() {
+
+
+      /* =====================================
+         USER APPEARED
+         ===================================== */
+
+      if (
+        userVisible &&
+        !previousUserVisible
+      ) {
+
+        console.log(
+          "NOVA: USER DETECTED"
+        );
+
+
+        goodbyeReactionDone =
+          false;
+
+
+        clearTimeout(
+          absenceTimer
+        );
+
+
+        cameraStatus.textContent =
+          "Camera ON • I can see you!";
+
+
+        /*
+           Don't interrupt Nova if
+           she is already talking.
+        */
+
+        if (
+          !speechSynthesis.speaking &&
+          !recognitionRunning &&
+          novaState !== "thinking"
+        ) {
+
+          showEmotion(
+            "happy"
+          );
+
+
+          speak(
+            "Oh! There you are!"
+          );
+
+        }
+
+      }
+
+
+      /* =====================================
+         USER DISAPPEARED
+         ===================================== */
+
+      if (
+        !userVisible &&
+        previousUserVisible
+      ) {
+
+        console.log(
+          "NOVA: USER LEFT CAMERA"
+        );
+
+
+        cameraStatus.textContent =
+          "Camera ON • Where are you?";
+
+
+        clearTimeout(
+          absenceTimer
+        );
+
+
+        /*
+           Wait before reacting.
+
+           This avoids false reactions if
+           the face detector misses one frame.
+        */
+
+        absenceTimer =
+          setTimeout(
+            () => {
+
+              if (
+                cameraEnabled &&
+                !userVisible &&
+                !goodbyeReactionDone
+              ) {
+
+                goodbyeReactionDone =
+                  true;
+
+
+                showEmotion(
+                  "sad"
+                );
+
+
+                /*
+                   Don't interrupt active
+                   conversation.
+                */
+
+                if (
+                  !speechSynthesis.speaking &&
+                  !recognitionRunning
+                ) {
+
+                  speak(
+                    "Where did you go? I can't see you."
+                  );
+
+                }
+
+              }
+
+            },
+            2500
+          );
+
+      }
+
+
+      /* =====================================
+         USER VISIBLE
+         ===================================== */
+
+      if (
+        userVisible &&
+        !speechSynthesis.speaking &&
+        !recognitionRunning &&
+        novaState !== "thinking"
+      ) {
+
+        /*
+           Don't constantly overwrite
+           other emotions.
+        */
+
+        if (
+          novaState === "idle"
+        ) {
+
+          showEmotion(
+            "happy"
+          );
+
+        }
+
+      }
+
+
+      previousUserVisible =
+        userVisible;
+
+    }
+
+
+    /* =================================================
+       VISION LOOP
+       ================================================= */
+
+    function startVision() {
+
+      clearInterval(
+        visionTimer
+      );
+
+
+      /*
+         Check roughly every 700ms.
+      */
+
+      visionTimer =
+        setInterval(
+          detectUser,
+          700
+        );
+
+
+      detectUser();
+
+    }
+
+
+    /* =================================================
+       PAGE START
+       ================================================= */
+
+    console.log(
+      "Nova frontend loaded successfully."
+    );
+
+
+  </script>
+
+</body>
+
+</html>
+```
